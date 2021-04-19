@@ -1,5 +1,12 @@
 # spark-dashboard
 
+## Chrome with CORS disabled
+
+I Windows start chrome from the programm folder `/c/Programme/Google/Chrome/Application` with
+```
+./chrome.exe --user-data-dir="C:/Chrome dev session" --disable-web-security
+```
+
 ## Project setup
 ```
 npm install
@@ -22,3 +29,4 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
