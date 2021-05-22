@@ -7,12 +7,12 @@
             <v-list-item-content>
               <v-list-item-title class="headline">
                 <v-list-item-icon class="text-left ma-0">
-                  <v-icon color="amber">mdi-clock</v-icon>
+                  <v-icon color="green">mdi-clock</v-icon>
                 </v-list-item-icon>
                 {{ application_runtime }}
               </v-list-item-title>
               <v-list-item-subtitle>
-                <b>id:</b> {{ application_id }}</v-list-item-subtitle
+                <b>id:</b> <a :href="spark_api_current_app" target="_blank">{{ application_id }}</a></v-list-item-subtitle
               >
             </v-list-item-content>
           </v-list-item>
@@ -154,8 +154,8 @@
               height="25"
               color="red"
             >
-              <strong
-                >{{ executors[executor_random_id].activeTasks }}/
+              <strong>
+                {{ executors[executor_random_id].activeTasks }}/
                 {{ executors[executor_random_id].totalCores }}
               </strong>
             </v-progress-linear>
@@ -313,7 +313,10 @@
             </v-expansion-panel-header>
             <v-expansion-panel-content>
               <div><pre>
-                {{ memory_timeseries }}
+                {{ chartExecutorMemory2["1"].chartData}}
+                </pre>
+                <pre>
+                {{chartExecutorMemory}}
                 </pre>
               </div>
             </v-expansion-panel-content>
@@ -322,14 +325,13 @@
       </v-col>
 
       <v-col class="mb-5" cols="12">
-        CHART TESTING {{startTime}}
+        Single CHART TESTING {{startTime}}
         <chart :chart-data="chartExecutorMemory" :options="chartOptions"></chart>
       </v-col>
     </v-row>
     <v-row>
     <v-col>
    
-      
     </v-col>
     </v-row>
  
@@ -351,6 +353,7 @@ export default {
   },
   data: () => ({
     spark_api: "http://spark-ui.k8s-prod1.local.parcit/api/v1/applications",
+    spark_api_current_app: "",
     rancher_api:"https://svr-rancher.local.parcit/v3",
     application_id: null,
     application_name: "",
@@ -385,6 +388,26 @@ export default {
   },
 
   methods: {
+
+     async apiCallWrapper() {
+      try {
+        //await this.getRancherAPI();
+        this.setStartTime();
+        await this.getApplicationInfo();
+        await this.getEnvironmentDetails();
+        await this.getJopDetails();
+        await this.getStageDetails();
+        await this.getCurrentTaskList();
+        await this.getExecutorDetails();
+        await this.append_memory_timeseries();
+        await this.createChartData();
+        await this.createMemoryChartData();
+      } catch (e) {
+        this.$emit("heartbeat", "api error");
+        console.log(e);
+      }
+    },
+
     async createMemoryChartData(){
       let now=new Date().getTime();
       let time=(now-this.startTime)/1000
@@ -418,7 +441,7 @@ export default {
           this.chartExecutorMemory2[this.executors[i].id].chartData.datasets[1].data.push(Math.ceil(this.executors[i].maxMemory/1000000000))
           }
       //this.test=this.chartExecutorMemory2
-      console.log("FICKER",this.chartExecutorMemory2)
+      //console.log("FICKER",this.chartExecutorMemory2)
       this.executor1=this.chartExecutorMemory2["1"].chartData
     },
     setStartTime(){
@@ -477,25 +500,6 @@ export default {
           ]
         }
     },
-    async apiCallWrapper() {
-      try {
-        //await this.getRancherAPI();
-        this.setStartTime();
-        await this.getApplicationInfo();
-        await this.getEnvironmentDetails();
-        await this.getJopDetails();
-        await this.getStageDetails();
-        await this.getCurrentTaskList();
-        await this.getExecutorDetails();
-        await this.append_memory_timeseries();
-        await this.createChartData();
-        await this.createMemoryChartData();
-      } catch (e) {
-        this.$emit("heartbeat", "api error");
-        console.log(e);
-      }
-    },
-
     async getApplicationInfo() {
       const response = await axios.get(this.spark_api, {
         headers: {
@@ -505,6 +509,7 @@ export default {
       });
       this.$emit("heartbeat", response.statusText);
       this.application_id = response.data[0].id;
+      this.spark_api_current_app = this.spark_api + "/" + response.data[0].id;
       this.application_name = response.data[0].name;
       this.application_starttime =
         response.data[0].attempts[
@@ -599,7 +604,7 @@ export default {
           "/",
           current_stage_attempt,
           "/taskList",
-          "?length=200"
+          "?length=400"
         ),
         {
           headers: {

@@ -6,6 +6,7 @@ When running this app on your local machine the access of the API via Javascript
 You have to start Chrome with the flag `--disable-web-security`
 In Windows start chrome from the programm folder `/c/Programme/Google/Chrome/Application` with
 ```
+cd /c/Programme/Google/Chrome/Application
 ./chrome.exe --user-data-dir="C:/Chrome dev session" --disable-web-security
 ```
 
